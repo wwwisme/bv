@@ -56,6 +56,7 @@ BV ~~(Bug Video)~~ 是一款 [哔哩哔哩](https://www.bilibili.com) 的第三�
   ![播放器内视频列表](https://github.com/Frost819/picx-images-hosting/raw/master/Screenshot_20251203_150840.70as7kfxxm.webp)
 - 大幅优化进度条缩略图显示流畅度
 - 播放器内可查看相关视频，并支持设置连续播放相关视频
+- 支持付费视频试看
 - bug fixes
 
 <details>
@@ -207,6 +208,16 @@ BV ~~(Bug Video)~~ 是一款 [哔哩哔哩](https://www.bilibili.com) 的第三�
 - 增加播放器内相关视频显示，并支持设置连续播放相关视频
 - 增加日志管理网页端，优化日志下载体验 @wjz2001
 - 修复web接口request was banned报错 @fantasytyx
+
+### 0.3.15 r892
+- 优化视频播放相关数据加载速度
+- 优化弹幕防遮挡蒙版内存占用，解决长视频蒙版过大导致播放器卡死
+- 支持付费视频试看功能并增加相关提示；优化播放器内提示显示
+- 修复顶端和底端弹幕不显示问题
+- 修复app接口弹幕防遮挡显示错误
+- 修复竖屏视频判断逻辑错误
+- 修复番剧播放失败
+- merge pull requests from @wjz2001
 
 </details>
 
