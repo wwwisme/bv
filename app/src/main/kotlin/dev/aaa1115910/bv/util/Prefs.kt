@@ -20,8 +20,10 @@ import dev.aaa1115910.bv.entity.Audio
 import dev.aaa1115910.bv.entity.PlayerType
 import dev.aaa1115910.bv.entity.Resolution
 import dev.aaa1115910.bv.entity.VideoCodec
+import dev.aaa1115910.bv.screen.main.LeftNaviItem
 import dev.aaa1115910.bv.screen.settings.content.ActionAfterPlayItems
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,21 +64,45 @@ object Prefs {
         return PrefDelegate(key, default, flowMap, save, restore)
     }
 
-    // 基础类型
+    // =========================================================================
+    // 账号 & 认证
+    // =========================================================================
+
     var isLogin by pref(PrefKeys.prefIsLoginKey, false)
     var uid by pref(PrefKeys.prefUidKey, 0L)
     var sid by pref(PrefKeys.prefSidKey, "")
     var sessData by pref(PrefKeys.prefSessDataKey, "")
     var biliJct by pref(PrefKeys.prefBiliJctKey, "")
     var uidCkMd5 by pref(PrefKeys.prefUidCkMd5Key, "")
-
-    // 复杂类型
     var tokenExpiredData by pref(
         PrefKeys.prefTokenExpiredDateKey,
         Date(0),
         save = { it.time },
         restore = { Date(it) }
     )
+    var accessToken by pref(PrefKeys.prefAccessTokenKey, "")
+    var refreshToken by pref(PrefKeys.prefRefreshTokenKey, "")
+    var buvid by pref(PrefKeys.prefBuvidKey, "")
+    var buvid3 by pref(PrefKeys.prefBuvid3Key, "")
+
+    // =========================================================================
+    // 网络 & API
+    // =========================================================================
+
+    var apiType by pref(
+        PrefKeys.prefApiTypeKey,
+        ApiType.Web,
+        save = { it.ordinal },
+        restore = { ApiType.entries.getOrElse(it) { ApiType.Web } }
+    )
+    var enableProxy by pref(PrefKeys.prefEnableProxyKey, false)
+    var proxyHttpServer by pref(PrefKeys.prefProxyHttpServerKey, "")
+    var proxyGRPCServer by pref(PrefKeys.prefProxyGRPCServerKey, "")
+    var preferOfficialCdn by pref(PrefKeys.prefPreferOfficialCdn, false)
+
+    // =========================================================================
+    // 播放器 - 视频
+    // =========================================================================
 
     var defaultQuality by pref(
         PrefKeys.prefDefaultQualityKey,
@@ -84,13 +110,29 @@ object Prefs {
         save = { it.code },
         restore = { Resolution.fromCode(it) }
     )
-
-    var defaultPlaySpeed by pref(
-        PrefKeys.prefDefaultPlaySpeedKey,
-        PlaySpeedItem.x1,
-        save = { it.code },
-        restore = { PlaySpeedItem.fromCode(it) }
+    var defaultVideoCodec by pref(
+        PrefKeys.prefDefaultVideoCodecKey,
+        VideoCodec.AVC,
+        save = { it.ordinal },
+        restore = { VideoCodec.fromCode(it) }
     )
+    var playerType by pref(
+        PrefKeys.prefPlayerTypeKey,
+        PlayerType.Media3,
+        save = { it.ordinal },
+        restore = { PlayerType.entries.getOrElse(it) { PlayerType.Media3 } }
+    )
+    var enableSoftwareVideoDecoder by pref(PrefKeys.prefEnableSoftwareVideoDecoder, false)
+    var actionAfterPlay by pref(
+        PrefKeys.prefActionAfterPlayKey,
+        ActionAfterPlayItems.PlayNext,
+        save = { it.code },
+        restore = { ActionAfterPlayItems.fromCode(it) }
+    )
+
+    // =========================================================================
+    // 播放器 - 音频
+    // =========================================================================
 
     var defaultAudio by pref(
         PrefKeys.prefDefaultAudioKey,
@@ -98,12 +140,12 @@ object Prefs {
         save = { it.code },
         restore = { Audio.fromCode(it) }
     )
+    var enableFfmpegAudioRenderer by pref(PrefKeys.prefEnableFfmpegAudioRenderer, false)
 
-    var defaultDanmakuScale by pref(PrefKeys.prefDefaultDanmakuScaleKey, 1.75f)
-    var defaultDanmakuOpacity by pref(PrefKeys.prefDefaultDanmakuOpacityKey, 0.7f)
-    var defaultDanmakuSpeedFactor by pref(PrefKeys.prefDefaultDanmakuSpeedFactorKey, 1f)
+    // =========================================================================
+    // 播放器 - 弹幕
+    // =========================================================================
 
-    // 列表类型映射
     var defaultDanmakuTypes by pref(
         PrefKeys.prefDefaultDanmakuTypesKey,
         listOf(
@@ -119,31 +161,26 @@ object Prefs {
                 .mapNotNull { runCatching { DanmakuType.entries[it.toInt()] }.getOrNull() }
         }
     )
-
+    var defaultDanmakuScale by pref(PrefKeys.prefDefaultDanmakuScaleKey, 1.75f)
+    var defaultDanmakuOpacity by pref(PrefKeys.prefDefaultDanmakuOpacityKey, 0.7f)
+    var defaultDanmakuSpeedFactor by pref(PrefKeys.prefDefaultDanmakuSpeedFactorKey, 1f)
     var defaultDanmakuArea by pref(PrefKeys.prefDefaultDanmakuAreaKey, 0.5f)
+    var defaultDanmakuMask by pref(PrefKeys.prefDefaultDanmakuMask, false)
 
-    var defaultVideoCodec by pref(
-        PrefKeys.prefDefaultVideoCodecKey,
-        VideoCodec.AVC,
-        save = { it.ordinal },
-        restore = { VideoCodec.fromCode(it) }
-    )
+    // =========================================================================
+    // 播放器 - 字幕
+    // =========================================================================
 
-    var incognitoMode by pref(PrefKeys.prefIncognitoModeKey, false)
-
-    // DP/SP 类型映射
     var defaultSubtitleFontSize by pref(
         PrefKeys.prefDefaultSubtitleFontSizeKey,
         24.sp,
         save = { it.value.roundToInt() },
         restore = { it.sp }
     )
-
     var defaultSubtitleBackgroundOpacity by pref(
         PrefKeys.prefDefaultSubtitleBackgroundOpacityKey,
         0.4f
     )
-
     var defaultSubtitleBottomPadding by pref(
         PrefKeys.prefDefaultSubtitleBottomPaddingKey,
         12.dp,
@@ -151,20 +188,23 @@ object Prefs {
         restore = { it.dp }
     )
 
-    var showFps by pref(PrefKeys.prefShowFpsKey, false)
+    // =========================================================================
+    // 播放器 - 界面
+    // =========================================================================
 
-    var buvid by pref(PrefKeys.prefBuvidKey, "")
-    var buvid3 by pref(PrefKeys.prefBuvid3Key, "")
-
-    var playerType by pref(
-        PrefKeys.prefPlayerTypeKey,
-        PlayerType.Media3,
-        save = { it.ordinal },
-        restore = { PlayerType.entries.getOrElse(it) { PlayerType.Media3 } }
+    var defaultPlaySpeed by pref(
+        PrefKeys.prefDefaultPlaySpeedKey,
+        PlaySpeedItem.x1,
+        save = { it.code },
+        restore = { PlaySpeedItem.fromCode(it) }
     )
+    var showFps by pref(PrefKeys.prefShowFpsKey, false)
+    var showVideoInfo by pref(PrefKeys.prefShowVideoInfoKey, true)
+    var showPersistentSeek by pref(PrefKeys.prefShowPersistentSeekKey, false)
 
-    // 暴露 Flow 给 Compose 使用的示例
-//    val playerTypeFlow = flowMap[PrefKeys.prefPlayerTypeKey]!!.asStateFlow() // 需强转类型使用，或封装 helper
+    // =========================================================================
+    // 应用界面
+    // =========================================================================
 
     var density by pref(
         PrefKeys.prefDensityKey,
@@ -172,40 +212,27 @@ object Prefs {
     )
     val densityFlow = flowMap[PrefKeys.prefDensityKey]!!.asStateFlow() as StateFlow<Float>
 
+    var homeLeftNaviItem by pref(
+        PrefKeys.prefHomeLeftNavItem,
+        LeftNaviItem.Home,
+        save = { it.ordinal },
+        restore = { LeftNaviItem.entries.getOrElse(it) { LeftNaviItem.Home } }
+    )
     var firstHomeTopNavItem by pref(
         PrefKeys.prefFirstHomeTopNavItemKey,
         HomeTopNavItem.Dynamics,
         save = { it.code },
         restore = { HomeTopNavItem.fromCode(it) }
     )
-
-    var showVideoInfo by pref(PrefKeys.prefShowVideoInfoKey, true)
-    var showPersistentSeek by pref(PrefKeys.prefShowPersistentSeekKey, false)
     var showHotword by pref(PrefKeys.prefShowHotwordKey, true)
-    var accessToken by pref(PrefKeys.prefAccessTokenKey, "")
-    var refreshToken by pref(PrefKeys.prefRefreshTokenKey, "")
 
-    var apiType by pref(
-        PrefKeys.prefApiTypeKey,
-        ApiType.Web,
-        save = { it.ordinal },
-        restore = { ApiType.entries.getOrElse(it) { ApiType.Web } }
-    )
+    // =========================================================================
+    // 隐私
+    // =========================================================================
 
-    var enableProxy by pref(PrefKeys.prefEnableProxyKey, false)
-    var proxyHttpServer by pref(PrefKeys.prefProxyHttpServerKey, "")
-    var proxyGRPCServer by pref(PrefKeys.prefProxyGRPCServerKey, "")
-    var preferOfficialCdn by pref(PrefKeys.prefPreferOfficialCdn, false)
-    var defaultDanmakuMask by pref(PrefKeys.prefDefaultDanmakuMask, false)
-    var enableFfmpegAudioRenderer by pref(PrefKeys.prefEnableFfmpegAudioRenderer, false)
-    var enableSoftwareVideoDecoder by pref(PrefKeys.prefEnableSoftwareVideoDecoder, false)
+    var incognitoMode by pref(PrefKeys.prefIncognitoModeKey, false)
 
-    var actionAfterPlay by pref(
-        PrefKeys.prefActionAfterPlayKey,
-        ActionAfterPlayItems.PlayNext,
-        save = { it.code },
-        restore = { ActionAfterPlayItems.fromCode(it) }
-    )
+    // =========================================================================
 
     /**
      * [必须调用] 在 Application onCreate 中调用此方法。
@@ -257,11 +284,10 @@ class PrefDelegate<T, P>(
     private val key: Preferences.Key<P>,
     private val defaultValue: T,
     map: ConcurrentHashMap<Preferences.Key<*>, MutableStateFlow<Any?>>,
-    private val save: (T) -> P = { it as P }, // 默认不转换
-    private val restore: (P) -> T = { it as T } // 默认不转换
+    private val save: (T) -> P = { it as P },
+    private val restore: (P) -> T = { it as T }
 ) : ReadWriteProperty<Any?, T> {
 
-    // 初始化 Flow，存入 map 供 Prefs.init 统一更新
     private val _flow = MutableStateFlow<Any?>(save(defaultValue))
 
     init {
@@ -269,11 +295,11 @@ class PrefDelegate<T, P>(
     }
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        // 从 StateFlow 读取当前的最新的原始值 (P)，然后还原为对象 (T)
         val rawValue = _flow.value as? P
         return if (rawValue != null) restore(rawValue) else defaultValue
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         val persistValue = save(value)
 
@@ -290,6 +316,7 @@ class PrefDelegate<T, P>(
 }
 
 private object PrefKeys {
+    // 账号 & 认证
     val prefIsLoginKey = booleanPreferencesKey("il")
     val prefUidKey = longPreferencesKey("uid")
     val prefSidKey = stringPreferencesKey("sid")
@@ -297,37 +324,54 @@ private object PrefKeys {
     val prefBiliJctKey = stringPreferencesKey("bj")
     val prefUidCkMd5Key = stringPreferencesKey("ucm")
     val prefTokenExpiredDateKey = longPreferencesKey("ted")
-    val prefDefaultQualityKey = intPreferencesKey("dq")
-    val prefDefaultAudioKey = intPreferencesKey("da")
-    val prefDefaultPlaySpeedKey = intPreferencesKey("dps")
-    val prefDefaultDanmakuScaleKey = floatPreferencesKey("dds2")
-    val prefDefaultDanmakuOpacityKey = floatPreferencesKey("ddo")
-    val prefDefaultDanmakuSpeedFactorKey = floatPreferencesKey("ddsf")
-    val prefDefaultDanmakuTypesKey = stringPreferencesKey("ddts")
-    val prefDefaultDanmakuAreaKey = floatPreferencesKey("dda")
-    val prefDefaultVideoCodecKey = intPreferencesKey("dvc")
-    val prefIncognitoModeKey = booleanPreferencesKey("im")
-    val prefDefaultSubtitleFontSizeKey = intPreferencesKey("dsfs")
-    val prefDefaultSubtitleBackgroundOpacityKey = floatPreferencesKey("dsbo")
-    val prefDefaultSubtitleBottomPaddingKey = intPreferencesKey("dsbp")
-    val prefShowFpsKey = booleanPreferencesKey("sf")
-    val prefBuvidKey = stringPreferencesKey("random_buvid")
-    val prefBuvid3Key = stringPreferencesKey("random_buvid3")
-    val prefPlayerTypeKey = intPreferencesKey("pt")
-    val prefDensityKey = floatPreferencesKey("density")
-    val prefFirstHomeTopNavItemKey = intPreferencesKey("first_home_top_nav")
-    val prefShowVideoInfoKey = booleanPreferencesKey("show_video_info")
-    val prefShowPersistentSeekKey = booleanPreferencesKey("show_persistent_seek")
-    val prefShowHotwordKey = booleanPreferencesKey("shw")
     val prefAccessTokenKey = stringPreferencesKey("access_token")
     val prefRefreshTokenKey = stringPreferencesKey("refresh_token")
+    val prefBuvidKey = stringPreferencesKey("random_buvid")
+    val prefBuvid3Key = stringPreferencesKey("random_buvid3")
+
+    // 网络 & API
     val prefApiTypeKey = intPreferencesKey("api_type")
     val prefEnableProxyKey = booleanPreferencesKey("enable_proxy")
     val prefProxyHttpServerKey = stringPreferencesKey("proxy_http_server")
     val prefProxyGRPCServerKey = stringPreferencesKey("proxy_grpc_server")
     val prefPreferOfficialCdn = booleanPreferencesKey("prefer_official_cdn")
-    val prefDefaultDanmakuMask = booleanPreferencesKey("prefer_enable_webmark")
-    val prefEnableFfmpegAudioRenderer = booleanPreferencesKey("enable_ffmpeg_audio_renderer")
+
+    // 播放器 - 视频
+    val prefDefaultQualityKey = intPreferencesKey("dq")
+    val prefDefaultVideoCodecKey = intPreferencesKey("dvc")
+    val prefPlayerTypeKey = intPreferencesKey("pt")
     val prefEnableSoftwareVideoDecoder = booleanPreferencesKey("enable_software_video_decoder")
     val prefActionAfterPlayKey = intPreferencesKey("action_after_play")
+
+    // 播放器 - 音频
+    val prefDefaultAudioKey = intPreferencesKey("da")
+    val prefEnableFfmpegAudioRenderer = booleanPreferencesKey("enable_ffmpeg_audio_renderer")
+
+    // 播放器 - 弹幕
+    val prefDefaultDanmakuTypesKey = stringPreferencesKey("ddts")
+    val prefDefaultDanmakuScaleKey = floatPreferencesKey("dds2")
+    val prefDefaultDanmakuOpacityKey = floatPreferencesKey("ddo")
+    val prefDefaultDanmakuSpeedFactorKey = floatPreferencesKey("ddsf")
+    val prefDefaultDanmakuAreaKey = floatPreferencesKey("dda")
+    val prefDefaultDanmakuMask = booleanPreferencesKey("prefer_enable_webmark")
+
+    // 播放器 - 字幕
+    val prefDefaultSubtitleFontSizeKey = intPreferencesKey("dsfs")
+    val prefDefaultSubtitleBackgroundOpacityKey = floatPreferencesKey("dsbo")
+    val prefDefaultSubtitleBottomPaddingKey = intPreferencesKey("dsbp")
+
+    // 播放器 - 界面
+    val prefDefaultPlaySpeedKey = intPreferencesKey("dps")
+    val prefShowFpsKey = booleanPreferencesKey("sf")
+    val prefShowVideoInfoKey = booleanPreferencesKey("show_video_info")
+    val prefShowPersistentSeekKey = booleanPreferencesKey("show_persistent_seek")
+
+    // 应用界面
+    val prefDensityKey = floatPreferencesKey("density")
+    val prefHomeLeftNavItem = intPreferencesKey("home_left_nav")
+    val prefFirstHomeTopNavItemKey = intPreferencesKey("first_home_top_nav")
+    val prefShowHotwordKey = booleanPreferencesKey("shw")
+
+    // 隐身模式
+    val prefIncognitoModeKey = booleanPreferencesKey("im")
 }

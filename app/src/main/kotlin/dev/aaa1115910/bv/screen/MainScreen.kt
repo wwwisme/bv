@@ -43,6 +43,7 @@ import dev.aaa1115910.bv.screen.main.PersonalContent
 import dev.aaa1115910.bv.screen.main.PgcContent
 import dev.aaa1115910.bv.screen.main.UgcContent
 import dev.aaa1115910.bv.screen.search.SearchInputScreen
+import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.fException
 import dev.aaa1115910.bv.util.fInfo
 import dev.aaa1115910.bv.util.toast
@@ -59,7 +60,7 @@ fun MainScreen(
     val logger = KotlinLogging.logger("MainScreen")
     var showUserPanel by remember { mutableStateOf(false) }
     var lastPressBack: Long by remember { mutableLongStateOf(0L) }
-    var selectedDrawerItem by remember { mutableStateOf(LeftNaviItem.Home) }
+    var selectedDrawerItem by remember { mutableStateOf(Prefs.homeLeftNaviItem) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     val personalFocusRequester = remember { FocusRequester() }
@@ -110,6 +111,7 @@ fun MainScreen(
                 avatar = userViewModel.face,
                 //avatar = "https://i2.hdslb.com/bfs/face/ef0457addb24141e15dfac6fbf45293ccf1e32ab.jpg",
                 //username = "碧诗",
+                selectedItem = selectedDrawerItem,
                 onLeftNaviItemChanged = { selectedDrawerItem = it },
                 onOpenSettings = {
                     context.startActivity(Intent(context, SettingsActivity::class.java))

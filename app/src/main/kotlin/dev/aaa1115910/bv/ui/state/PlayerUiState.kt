@@ -50,7 +50,6 @@ data class PlayerUiState(
     val availableQuality: Map<Int, String> = emptyMap(),
     val availableVideoCodec: List<VideoCodec> = emptyList(),
     val availableAudio: List<Audio> = emptyList(),
-    val availableSubtitles: List<Subtitle> = emptyList(),
     val availableVideoList: List<VideoListItem> = emptyList(),
 
     // 相关视频
@@ -73,6 +72,7 @@ data class PlayerUiState(
     val subtitleState: SubtitleState = SubtitleState(),
     val subtitleId: Long = -1L,
     val subtitleData: List<SubtitleItem> = emptyList(),
+    val subtitleList: List<Subtitle> = emptyList(),
 )
 
 // 2. 播放器进度条状态 (高频更新)

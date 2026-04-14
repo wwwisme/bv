@@ -19,10 +19,6 @@ import com.kuaishou.akdanmaku.ui.DanmakuPlayer
 import dev.aaa1115910.biliapi.entity.ApiType
 import dev.aaa1115910.biliapi.entity.PlayData
 import dev.aaa1115910.biliapi.entity.video.HeartbeatVideoType
-import dev.aaa1115910.biliapi.entity.video.Subtitle
-import dev.aaa1115910.biliapi.entity.video.SubtitleAiStatus
-import dev.aaa1115910.biliapi.entity.video.SubtitleAiType
-import dev.aaa1115910.biliapi.entity.video.SubtitleType
 import dev.aaa1115910.biliapi.entity.video.VideoPage
 import dev.aaa1115910.biliapi.http.BiliHttpApi
 import dev.aaa1115910.biliapi.repositories.VideoPlayRepository
@@ -311,7 +307,7 @@ class VideoPlayerV3ViewModel(
             var subtitleName = ""
             runCatching {
                 val subtitle =
-                    _uiState.value.availableSubtitles.find { it.id == id } ?: return@runCatching
+                    _uiState.value.subtitleList.find { it.id == id } ?: return@runCatching
                 subtitleName = subtitle.langDoc
                 logger.info { "Subtitle url: ${subtitle.url}" }
                 val client = HttpClient(OkHttp)
@@ -588,12 +584,17 @@ class VideoPlayerV3ViewModel(
         // 更新UiState
         _uiState.update {
             it.copy(
-                isBuffering = true,
                 aid = newVideo.aid,
                 cid = newVideo.cid,
                 epid = newVideo.epid,
                 seasonId = newVideo.seasonId ?: 0,
-                title = newVideo.title
+                title = newVideo.title,
+                isBuffering = true,
+                videoShot = null,
+                danmakuMask = null,
+                subtitleList = emptyList(),
+                subtitleData = emptyList(),
+                relatedVideos = emptyList(),
             )
         }
 
@@ -949,35 +950,17 @@ class VideoPlayerV3ViewModel(
         val state = _uiState.value
 
         runCatching {
-            val subtitleData = videoPlayRepository.getSubtitle(
+            val subtitleList = videoPlayRepository.getSubtitle(
                 aid = state.aid,
                 cid = state.cid,
                 preferApiType = Prefs.apiType
             )
             _uiState.update { currentState ->
-                val newSubtitles: List<Subtitle> = buildList {
-                    add(
-                        Subtitle(
-                            id = -1,
-                            lang = "",
-                            langDoc = "关闭",
-                            url = "",
-                            type = SubtitleType.CC,
-                            aiType = SubtitleAiType.Normal,
-                            aiStatus = SubtitleAiStatus.None
-                        )
-                    )
-                    addAll(subtitleData)
-                    sortBy { it.id }
-                }
                 currentState.copy(
-                    subtitleId = -1,
-                    subtitleData = emptyList(),
-                    availableSubtitles = newSubtitles
+                    subtitleList = subtitleList
                 )
             }
-
-            logger.fInfo { "Update subtitle size: ${subtitleData.size}" }
+            logger.fInfo { "Update subtitle size: ${subtitleList.size}" }
         }.onFailure {
             logger.fWarn { "Update subtitle failed: ${it.stackTraceToString()}" }
         }
@@ -986,9 +969,9 @@ class VideoPlayerV3ViewModel(
     private fun enableFirstSubtitle() {
         runCatching {
             logger.info { "Load first subtitle" }
-            logger.info { "availableSubtitle: ${_uiState.value.availableSubtitles.toList()}" }
+            logger.info { "availableSubtitle: ${_uiState.value.subtitleList.toList()}" }
             loadSubtitle(
-                _uiState.value.availableSubtitles
+                _uiState.value.subtitleList
                     .firstOrNull { it.id != -1L }?.id
                     ?: throw IllegalStateException("No available subtitle")
             )
@@ -1086,8 +1069,6 @@ class VideoPlayerV3ViewModel(
     }
 
     private suspend fun updateVideoShot() {
-        _uiState.update { it.copy(videoShot = null) }
-
         val state = _uiState.value
         runCatching {
             val videoShot = videoPlayRepository.getVideoShot(

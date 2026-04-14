@@ -278,7 +278,21 @@ private fun MenuList(
             VideoPlayerMenuNavItem.ClosedCaption -> {
                 ClosedCaptionMenuList(
                     currentSubtitleId = uiState.subtitleId,
-                    availableSubtitleTracks = uiState.availableSubtitles,
+                    availableSubtitleTracks = buildList {
+                        add(
+                            Subtitle(
+                                id = -1,
+                                lang = "",
+                                langDoc = "关闭",
+                                url = "",
+                                type = SubtitleType.CC,
+                                aiType = SubtitleAiType.Normal,
+                                aiStatus = SubtitleAiStatus.None
+                            )
+                        )
+                        addAll(uiState.subtitleList)
+                        sortBy { it.id }
+                    },
                     currentFontSize = uiState.subtitleState.fontSize,
                     currentOpacity = uiState.subtitleState.opacity,
                     currentPadding = uiState.subtitleState.bottomPadding,

@@ -17,12 +17,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -35,35 +33,27 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
-import androidx.tv.material3.rememberDrawerState
 import coil.compose.AsyncImage
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.isDpadRight
 import dev.aaa1115910.bv.util.isKeyDown
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LeftNaviContent(
     modifier: Modifier = Modifier,
     isLogin: Boolean = false,
     avatar: String = "",
+    selectedItem: LeftNaviItem,
     onLeftNaviItemChanged: (LeftNaviItem) -> Unit,
     onOpenSettings: () -> Unit,
     onShowUserPanel: () -> Unit,
     onFocusToContent: () -> Unit,
     onLogin: () -> Unit
 ) {
-    var selectedItem by remember { mutableStateOf(LeftNaviItem.Home) }
-
-    LaunchedEffect(selectedItem) {
-        onLeftNaviItemChanged(selectedItem)
-    }
-
     NavigationRail(
         modifier = modifier
             .fillMaxHeight()
@@ -112,7 +102,7 @@ fun LeftNaviContent(
                     }
                 } else {
                     Icon(
-                        imageVector = LeftNaviItem.User.displayIcon,
+                        imageVector = Icons.Default.AccountCircle,
                         contentDescription = null
                     )
                 }
@@ -145,7 +135,7 @@ fun LeftNaviContent(
                                 label = "selectionIndicatorColor"
                             ).value
                         ),
-                    onClick = { selectedItem = item },
+                    onClick = { onLeftNaviItemChanged(item) },
                     selected = isFocused,
                     icon = {
                         Icon(
@@ -165,7 +155,7 @@ fun LeftNaviContent(
             selected = settingsIsFocused,
             icon = {
                 Icon(
-                    imageVector = LeftNaviItem.Settings.displayIcon,
+                    imageVector = Icons.Default.Settings,
                     contentDescription = null
                 )
             }
@@ -174,15 +164,14 @@ fun LeftNaviContent(
 }
 
 enum class LeftNaviItem(
-    val displayIcon: ImageVector
+    val displayIcon: ImageVector,
+    val displayName: String
 ) {
-    User(displayIcon = Icons.Default.AccountCircle),
-    Search(displayIcon = Icons.Default.Search),
-    Personal(displayIcon = Icons.Default.Person),
-    Home(displayIcon = Icons.Default.Home),
-    UGC(displayIcon = Icons.Default.OndemandVideo),
-    PGC(displayIcon = Icons.Default.Movie),
-    Settings(displayIcon = Icons.Default.Settings), ;
+    Search(displayIcon = Icons.Default.Search, displayName = "搜索"),
+    Personal(displayIcon = Icons.Default.Person, displayName = "个人"),
+    Home(displayIcon = Icons.Default.Home, displayName = "主页"),
+    UGC(displayIcon = Icons.Default.OndemandVideo, displayName = "分区"),
+    PGC(displayIcon = Icons.Default.Movie, displayName = "影视"),
 }
 
 fun Modifier.selectionIndicator(color: Color): Modifier {
@@ -201,11 +190,12 @@ fun Modifier.selectionIndicator(color: Color): Modifier {
 private fun LeftNaviContentPreview() {
     BVTheme {
         LeftNaviContent(
+            selectedItem = LeftNaviItem.Home,
             onLeftNaviItemChanged = {},
             onOpenSettings = {},
             onShowUserPanel = {},
             onFocusToContent = {},
-            onLogin = {}
+            onLogin = {},
         )
     }
 }

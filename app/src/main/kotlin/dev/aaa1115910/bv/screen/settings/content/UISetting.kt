@@ -46,6 +46,7 @@ import dev.aaa1115910.bv.R
 import dev.aaa1115910.bv.component.HomeTopNavItem
 import dev.aaa1115910.bv.component.settings.SettingListItem
 import dev.aaa1115910.bv.component.settings.SettingSwitchListItem
+import dev.aaa1115910.bv.screen.main.LeftNaviItem
 import dev.aaa1115910.bv.screen.settings.SettingsMenuNavItem
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.Prefs
@@ -59,12 +60,14 @@ fun UISetting(
     val context = LocalContext.current
 
     var showDensityDialog by remember { mutableStateOf(false) }
+    var showStartupPageDialog by remember { mutableStateOf(false) }
     var showHomepageDialog by remember { mutableStateOf(false) }
 
     var showVideoInfo by remember { mutableStateOf(Prefs.showVideoInfo) }
     var showPersistentSeek by remember { mutableStateOf(Prefs.showPersistentSeek) }
 
     val density by Prefs.densityFlow.collectAsState(context.resources.displayMetrics.widthPixels / 960f)
+    var selectedLeftNavItem by remember { mutableStateOf(Prefs.homeLeftNaviItem) }
     var selectedFirstHomeTopNavItem by remember { mutableStateOf(Prefs.firstHomeTopNavItem) }
 
     Box(modifier = modifier) {
@@ -83,6 +86,13 @@ fun UISetting(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    SettingListItem(
+                        title = stringResource(R.string.settings_ui_startup_page_title),
+                        supportText = "当前：${selectedLeftNavItem.displayName}",
+                        onClick = { showStartupPageDialog = true }
+                    )
+                }
                 item {
                     SettingListItem(
                         title = stringResource(R.string.settings_ui_homepage_title),
@@ -129,6 +139,19 @@ fun UISetting(
         density = density,
         onDensityChange = { Prefs.density = it }
     )
+
+    if (showStartupPageDialog) {
+        OptionDialog(
+            options = LeftNaviItem.entries.toTypedArray(),
+            selectedOption = selectedLeftNavItem,
+            onDismiss = { showStartupPageDialog = false },
+            onSelect = {
+                Prefs.homeLeftNaviItem = it
+                selectedLeftNavItem = it
+            },
+            getDisplayName = { it.displayName }
+        )
+    }
 
     if (showHomepageDialog) {
         OptionDialog(
